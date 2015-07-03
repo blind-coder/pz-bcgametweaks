@@ -1,10 +1,13 @@
 require 'BuildingObjects/ISUI/ISBuildMenu'
 require 'TimedActions/ISInventoryTransferAction'
+require 'TimedActions/ISReadABook'
+require 'ISUI/ISToolTipInv'
 require 'ISUI/ISToolTipInv'
 
 BCGT = {};
 
 BCGT.canBuildOrig = ISBuildMenu.canBuild;
+-- reduce requirements for raincollectors
 ISBuildMenu.canBuild = function(plankNb, nailsNb, hingeNb, doorknobNb, baredWireNb, carpentrySkill, option, player) -- {{{
 	if option.name == getText("ContextMenu_Rain_Collector_Barrel") then
 		-- reduce required carp skill a bit
@@ -15,6 +18,7 @@ end
 -- }}}
 
 BCGT.ISITAisValid = ISInventoryTransferAction.isValid;
+-- transfer as much as you want onto the floor
 ISInventoryTransferAction.isValid = function(self) -- {{{
 	-- floor can have as many items as the player wants, ignore 50 units limit
 	if not self.srcContainer:contains(self.item) then
@@ -27,27 +31,18 @@ ISInventoryTransferAction.isValid = function(self) -- {{{
 end
 -- }}}
 
-BCGT.dump = function(o, lvl) --  Small function to dump an object. {{{
-  if lvl == nil then lvl = 5 end
-  if lvl < 0 then return "SO ("..tostring(o)..")" end
-
-  if type(o) == 'table' then
-    local s = '{ '
-    for k,v in pairs(o) do
-      if k == "prev" or k == "next" then
-        s = s .. '['..k..'] = '..tostring(v);
-      else
-        if type(k) ~= 'number' then k = '"'..k..'"' end
-        s = s .. '['..k..'] = ' .. BCGT.dump(v, lvl - 1) .. ',\n'
-      end
-    end
-    return s .. '}\n'
-  else
-    return tostring(o)
-  end
+BCGT.ISReadABookUpdate = ISReadABook.update;
+BCGT.ISReadABookStart = ISReadABook.start;
+-- freeze boredom and unhappyness while reading a skill book
+function ISReadABook.update(self) -- {{{
+	self.character:getBodyDamage():setBoredomLevel(ISReadABook.boredom);
+	self.character:getBodyDamage():setUnhappynessLevel(ISReadABook.boredom);
+	BCGT.ISReadABookUpdate(self);
 end
 -- }}}
-BCGT.pline = function (text) --  Print text to logfile -- {{{
-  print(tostring(text));
+function ISReadABook.start(self) -- {{{
+	ISReadABook.boredom = self.character:getBodyDamage():getBoredomLevel();
+	ISReadABook.unhappy = self.character:getBodyDamage():getUnhappynessLevel();
+	BCGT.ISReadABookStart(self);
 end
 -- }}}
