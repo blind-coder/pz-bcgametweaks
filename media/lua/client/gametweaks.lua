@@ -4,7 +4,7 @@ require 'TimedActions/ISReadABook'
 require 'ISUI/ISToolTipInv'
 require 'ISUI/ISToolTipInv'
 
-BCGT = {};
+if not BCGT then BCGT = {} end
 
 BCGT.canBuildOrig = ISBuildMenu.canBuild;
 -- reduce requirements for raincollectors
