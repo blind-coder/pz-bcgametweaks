@@ -2,7 +2,6 @@ require 'BuildingObjects/ISUI/ISBuildMenu'
 require 'TimedActions/ISInventoryTransferAction'
 require 'TimedActions/ISReadABook'
 require 'ISUI/ISToolTipInv'
-require 'ISUI/ISToolTipInv'
 
 if not BCGT then BCGT = {} end
 
