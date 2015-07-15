@@ -33,18 +33,20 @@ BCGT.OnFillContainer = function(roomtype, containertype, container)
 			end
 		end
 
-		local item = container:getItems():get(idx);
-		if broken then
-			item:setCondition(0, false);
-		elseif perfect then
-			item:setCondition(item:getConditionMax(), false);
-		else
-			item:setCondition(item:getConditionMax() * (5+ZombRand(90)) / 100, false);
-		end
+		if instanceof(item, "HandWeapon") then
+			local item = container:getItems():get(idx);
+			if broken then
+				item:setCondition(0, false);
+			elseif perfect then
+				item:setCondition(item:getConditionMax(), false);
+			else
+				item:setCondition(item:getConditionMax() * (5+ZombRand(90)) / 100, false);
+			end
 
-		if unlucky then
-			if ZombRand(20) == 12 then -- 5% chance
-				item:setHaveBeenRepaired(1+ZombRand(3));
+			if unlucky then
+				if ZombRand(20) == 12 then -- 5% chance
+					item:setHaveBeenRepaired(1+ZombRand(3));
+				end
 			end
 		end
 
