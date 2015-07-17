@@ -1,7 +1,7 @@
 require('Items/SuburbsDistributions');
 
 if not BCGT then BCGT = {} end
--- Extend this if you want your mod-items to have mix/max conditions
+-- Extend this if you want your mod-items to have min/max conditions
 -- Syntax is: [Fulltype] = % condition
 BCGT.minConditions = {
 	["Base.Axe"] = 25,
