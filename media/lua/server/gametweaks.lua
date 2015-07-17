@@ -134,12 +134,10 @@ BCGT.OnFillContainer = function(roomtype, containertype, container)--{{{
 
 		BCGT.randomizeCondition(item, BCGT.spawnChances[roomtype][containertype][item:getFullType()] or ZombRand(100));
 		if BCGT.spawnChances[item:getType()] then
-			print("inside container randomiser");
 			for cntIdx=0,item:getItemContainer():getItems():size()-1 do
 				local cItem = item:getItemContainer():getItems():get(cntIdx);
 				BCGT.randomizeCondition(item, BCGT.spawnChances[item:getType()][cItem:getFullType()] or ZombRand(100));
 			end
-			print("leaving container randomiser");
 		end
 	end
 end--}}}
