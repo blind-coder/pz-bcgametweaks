@@ -1,13 +1,15 @@
 require('Items/SuburbsDistributions');
 
 if not BCGT then BCGT = {} end
--- Extend this if you want your mod-items to have min/max conditions
+-- Extend this if you want your mod-items to have specific min/max conditions
+-- Default min condition: 0
 -- Syntax is: [Fulltype] = % condition
 BCGT.minConditions = {
 	["Base.Axe"] = 25,
 	["Base.HuntingKnife"] = 33
 };
 -- Max condition is ignored if you roll a perfect condition
+-- Default max condition: 100
 -- Syntax is: [Fulltype] = % condition
 BCGT.maxConditions = {
 	--[[
@@ -15,13 +17,15 @@ BCGT.maxConditions = {
 	["Base.HuntingKnife"] = 100
 	--]]
 };
--- These should have non-default chances to be broken,
+-- Extend this if you want your items to have specific chances to break or
+-- have perfect condition.
+-- Default break chance: 25
 -- Syntax is: [Fulltype] = chance in thousand
 BCGT.breakChance = {
 	["Base.Axe"] = 0,
 	["Base.HuntingKnife"] = 0
 }
--- These should have non-default chances to be in perfect condition,
+-- Default perfect Chance: 25
 -- Syntax is: [Fulltype] = chance in thousand
 BCGT.perfectChance = {
 	--[[
