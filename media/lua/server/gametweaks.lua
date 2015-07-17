@@ -1,61 +1,43 @@
 require('Items/SuburbsDistributions');
 
 if not BCGT then BCGT = {} end
+-- Extend this if you want your mod-items to have mix/max conditions
+-- Syntax is: [Fulltype] = % condition
+BCGT.minConditions = {
+	["Base.Axe"] = 25,
+	["Base.HuntingKnife"] = 33
+};
+-- Max condition is ignored if you roll a perfect condition
+-- Syntax is: [Fulltype] = % condition
+BCGT.maxConditions = {
+	--[[
+	["Base.Axe"] = 75,
+	["Base.HuntingKnife"] = 100
+	--]]
+};
+-- These should have non-default chances to be broken,
+-- Syntax is: [Fulltype] = chance in thousand
+BCGT.breakChance = {
+	["Base.Axe"] = 0,
+	["Base.HuntingKnife"] = 0
+}
+-- These should have non-default chances to be in perfect condition,
+-- Syntax is: [Fulltype] = chance in thousand
+BCGT.perfectChance = {
+	--[[
+	["Base.Spoon"] = 100, -- 10%
+	--]]
+	["Base.HuntingKnife"] = 250 -- 25%, made for endurance
+}
 
-BCGT.populateSpawnChances = function()--{{{
-	BCGT.spawnChances = {};
-	for k,v in pairs(SuburbsDistributions) do
-		BCGT.spawnChances[k] = {};
-		local t = BCGT.spawnChances[k];
-		local itemid = nil;
-		if v.items then
-			for k2,v2 in pairs(v.items) do
-				if k2 % 2 == 1 then
-					itemid = v2;
-				else
-					t[itemid] = math.max(t[itemid] or 0, v2); -- keep the bigger chance
-				end
-			end
-		else
-			for k2,v2 in pairs(v) do
-				if k2 ~= "rolls" and v2.items then
-					BCGT.spawnChances[k][k2] = {};
-					local t = BCGT.spawnChances[k][k2];
-					local itemid = nil;
-					for k3,v3 in ipairs(v2.items) do
-						if k3 % 2 == 1 then
-							itemid = v3;
-						else
-							t[itemid] = math.max(t[itemid] or 0, v3); -- keep the bigger chance
-						end
-					end
-				end
-			end
-		end
-	end
-end--}}}
-function BCGT.randomizeCondition(item, spawnChance)--{{{
+function BCGT.randomizeCondition(item)--{{{
 	-- defaults for all items
-	local breakChance   =  20; -- 2% chance to be broken
-	local perfectChance =  20; -- 2% chance to be perfect condition
-	local conditionMin  =   0; -- may be broken
+	local breakChance   = BCGT.breakChance[item:getFullType()]   or  25; -- default: 2.5%
+	local perfectChance = BCGT.perfectChance[item:getFullType()] or  25; -- default: 2.5%
+	local minCondition  = BCGT.minConditions[item:getFullType()] or   0;
+	local maxCondition  = BCGT.maxConditions[item:getFullType()] or 100;
 	local perfect       = false;
 	local broken        = false;
-
-	if spawnChance < 1 then
-		-- items with less than 5% spawn chance never spawn broken
-		breakChance   =   0; -- 0%, never broken
-		conditionMin  =  25; -- lower limit for condition is 25%
-		perfectChance = 100; -- may be mint condition more often, 10% chance
-	elseif spawnChance < 3 then
-		breakChance   =  10; -- lower chance to be broken, 1%
-		conditionMin  =  10; -- lower limit for condition is 10%
-		perfectChance =  50; -- may be mint condition more often,  5% chance
-	elseif spawnChance > 85 then
-		breakChance   =  50; -- higher chance to be broken, 5%
-		conditionMin  =   0; -- lower limit for condition is  0%
-		perfectChance =  10; -- may be mint condition less often,  1% chance
-	end
 
 	if unlucky then
 		breakChance = breakChance * 2; -- just double it
@@ -74,54 +56,60 @@ function BCGT.randomizeCondition(item, spawnChance)--{{{
 	end
 
 	if instanceof(item, "HandWeapon") then
+		-- setCondition uses integers representing remainder from getConditionMax()
+		-- so getConditionMax() * newCondition / 100 return valid results.
 		if broken then
 			item:setCondition(0, false);
 		elseif perfect then
 			item:setCondition(item:getConditionMax(), false);
 		else
-			-- I guess this might still translate to perfect condition.
-			local newCondition = item:getConditionMax() * (conditionMin+ZombRand(100 - conditionMin) / 100);
+			local newCondition = ZombRand(100);
+			newCondition = math.min(maxCondition, newCondition); -- make sure minCondition <= newCondition <= maxCondition
+			newCondition = math.max(minCondition, newCondition);
+			newCondition = item:getConditionMax() * newCondition / 100;
 			item:setCondition(newCondition, false);
 		end
 
-		--[[ TODO
+		--[[ TODO {{{
 		if unlucky then
 			if ZombRand(20) == 12 then -- 5% chance
 				item:setHaveBeenRepaired(1+ZombRand(3));
 			end
 		end
-		--]]
+		--]]-- }}}
 	end
 
+	-- setUsedDelta uses floats representing remainder from 1 (meaning "full")
+	-- so 0.5 means half full, 0.1 means 10% full, etc.
 	if instanceof(item, "DrainableComboItem") then
+		minCondition = math.max(minCondition, 1); -- safeguard
 		if broken then
-			item:setUsedDelta(0.1); -- safeguard
+			item:setUsedDelta(minCondition/100);
 		elseif perfect then
 			item:setUsedDelta(1.0);
 		else
-			-- I guess this might still translate to 100% fill level
-			local newCondition = (math.max(conditionMin, 0.1) + ZombRand(100 - conditionMin)) / 100;
-			item:setUsedDelta(newCondition);
+			local newCondition = ZombRand(100);
+			newCondition = math.min(maxCondition, newCondition); -- make sure minCondition <= newCondition <= maxCondition
+			newCondition = math.max(minCondition, newCondition);
+			item:setUsedDelta(newCondition/100);
 		end
 	end
 
 	if instanceof(item, "Drainable") then
+		minCondition = math.max(minCondition, 1); -- safeguard
 		if broken then
-			item:setUsedDelta(0.1);
+			item:setUsedDelta(minCondition/100);
 		elseif perfect then
 			item:setUsedDelta(1.0);
 		else
-			-- I guess this might still translate to 100% fill level
-			local newCondition = (math.max(conditionMin, 0.1) + ZombRand(100 - conditionMin)) / 100;
-			item:setUsedDelta(newCondition);
+			local newCondition = ZombRand(100);
+			newCondition = math.min(maxCondition, newCondition); -- make sure minCondition <= newCondition <= maxCondition
+			newCondition = math.max(minCondition, newCondition);
+			item:setUsedDelta(newCondition/100);
 		end
 	end
 end--}}}
 BCGT.OnFillContainer = function(roomtype, containertype, container)--{{{
-	if not BCGT.spawnChances then BCGT.populateSpawnChances() end
-	if not BCGT.spawnChances[roomtype] then BCGT.spawnChances[roomtype] = {} end
-	if not BCGT.spawnChances[roomtype][containertype] then BCGT.spawnChances[roomtype][containertype] = {} end
-
 	local unlucky, lucky = false, false;
 	if ItemPicker and ItemPicker.player then
 		lucky = ItemPicker.player:HasTrait("Lucky");
@@ -132,12 +120,9 @@ BCGT.OnFillContainer = function(roomtype, containertype, container)--{{{
 	for idx=0,container:getItems():size()-1 do
 		local item = container:getItems():get(idx);
 
-		BCGT.randomizeCondition(item, BCGT.spawnChances[roomtype][containertype][item:getFullType()] or ZombRand(100));
-		if BCGT.spawnChances[item:getType()] then
-			for cntIdx=0,item:getItemContainer():getItems():size()-1 do
-				local cItem = item:getItemContainer():getItems():get(cntIdx);
-				BCGT.randomizeCondition(item, BCGT.spawnChances[item:getType()][cItem:getFullType()] or ZombRand(100));
-			end
+		BCGT.randomizeCondition(item);
+		if SuburbsDistributions[item:getType()] then -- item is a generated container containing items to randomise
+			BCGT.OnFillContainer(nil, nil, item:getItemContainer());
 		end
 	end
 end--}}}
