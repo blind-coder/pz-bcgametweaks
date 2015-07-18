@@ -42,6 +42,22 @@ function BCGT.randomizeCondition(item)--{{{
 	local maxCondition  = BCGT.maxConditions[item:getFullType()] or 100;
 	local perfect       = false;
 	local broken        = false;
+	local chunk         = false;
+
+	-- Account for zombie density in area
+	if ItemPicker.player ~= nil then
+		chunk = getWorld():getMetaChunk((ItemPicker.player:getX()/10), (ItemPicker.player:getY()/10));
+	end
+	if chunk then
+		zombieDensity = math.min(ItemPicker.zombieDensityCap, chunk:getLootZombieIntensity());
+	end
+	if zombieDensity >= ItemPicker.zombieDensityCap / 4 * 3 then
+		breakChance = 0; -- nothing broken in densest areas
+		perfectChance = math.max(perfectChance, 500); -- at least 50% chance to be in mint condition
+	elseif zombieDensity >= ItemPicker.zombieDensityCap / 2 then
+		breakChance = math.min(breakChance, 10); -- still 1% chance
+		perfectChance = math.max(perfectChance, 200); -- at least 20% chance to be in mint condition
+	Znd
 
 	if unlucky then
 		breakChance = breakChance * 2; -- just double it
