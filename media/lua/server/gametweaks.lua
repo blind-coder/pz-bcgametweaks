@@ -52,12 +52,13 @@ function BCGT.randomizeCondition(item)--{{{
 		zombieDensity = math.min(ItemPicker.zombieDensityCap, chunk:getLootZombieIntensity());
 	end
 	if zombieDensity >= ItemPicker.zombieDensityCap / 4 * 3 then
+		minCondition = math.max(minCondition, 50);
 		breakChance = 0; -- nothing broken in densest areas
 		perfectChance = math.max(perfectChance, 500); -- at least 50% chance to be in mint condition
 	elseif zombieDensity >= ItemPicker.zombieDensityCap / 2 then
 		breakChance = math.min(breakChance, 10); -- still 1% chance
 		perfectChance = math.max(perfectChance, 200); -- at least 20% chance to be in mint condition
-	Znd
+	end
 
 	if unlucky then
 		breakChance = breakChance * 2; -- just double it
