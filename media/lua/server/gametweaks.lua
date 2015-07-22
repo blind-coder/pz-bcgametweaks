@@ -1,7 +1,8 @@
 require('Items/SuburbsDistributions');
 
 if not BCGT then BCGT = {} end
--- Extend this if you want your mod-items to have specific min/max conditions
+-- Extend this if you want items to have specific min/max conditions
+-- Min condition is ignored if you roll a broken condition
 -- Default min condition: 0
 -- Syntax is: [Fulltype] = % condition
 BCGT.minConditions = {
@@ -17,7 +18,7 @@ BCGT.maxConditions = {
 	["Base.HuntingKnife"] = 100
 	--]]
 };
--- Extend this if you want your items to have specific chances to break or
+-- Extend this if you want items to have specific chances to break or
 -- have perfect condition.
 -- Default break chance: 25
 -- Syntax is: [Fulltype] = chance in thousand
@@ -35,6 +36,8 @@ BCGT.perfectChance = {
 }
 
 function BCGT.randomizeCondition(item)--{{{
+	if not instanceof(item, "HandWeapon") and not instanceof(item, "DrainableComboItem") and not instanceof(item, "Drainable") then return end
+	print("Randomising condition of a "..item:getDisplayName());
 	-- defaults for all items
 	local breakChance   = BCGT.breakChance[item:getFullType()]   or  25; -- default: 2.5%
 	local perfectChance = BCGT.perfectChance[item:getFullType()] or  25; -- default: 2.5%
@@ -52,12 +55,13 @@ function BCGT.randomizeCondition(item)--{{{
 		zombieDensity = math.min(ItemPicker.zombieDensityCap, chunk:getLootZombieIntensity());
 	end
 	if zombieDensity >= ItemPicker.zombieDensityCap / 4 * 3 then
-		minCondition = math.max(minCondition, 50);
+		minCondition = math.max(minCondition, 50); -- at least 50% condition
 		breakChance = 0; -- nothing broken in densest areas
-		perfectChance = math.max(perfectChance, 500); -- at least 50% chance to be in mint condition
+		perfectChance = math.max(perfectChance, 300); -- at least 30% chance to be in mint condition
 	elseif zombieDensity >= ItemPicker.zombieDensityCap / 2 then
+		minCondition = math.max(minCondition, 33); -- at least 33% condition
 		breakChance = math.min(breakChance, 10); -- still 1% chance
-		perfectChance = math.max(perfectChance, 200); -- at least 20% chance to be in mint condition
+		perfectChance = math.max(perfectChance, 150); -- at least 15% chance to be in mint condition
 	end
 
 	if unlucky then
@@ -102,21 +106,7 @@ function BCGT.randomizeCondition(item)--{{{
 
 	-- setUsedDelta uses floats representing remainder from 1 (meaning "full")
 	-- so 0.5 means half full, 0.1 means 10% full, etc.
-	if instanceof(item, "DrainableComboItem") then
-		minCondition = math.max(minCondition, 1); -- safeguard
-		if broken then
-			item:setUsedDelta(minCondition/100);
-		elseif perfect then
-			item:setUsedDelta(1.0);
-		else
-			local newCondition = ZombRand(100);
-			newCondition = math.min(maxCondition, newCondition); -- make sure minCondition <= newCondition <= maxCondition
-			newCondition = math.max(minCondition, newCondition);
-			item:setUsedDelta(newCondition/100);
-		end
-	end
-
-	if instanceof(item, "Drainable") then
+	if instanceof(item, "DrainableComboItem") or instanceof(item, "Drainable") then
 		minCondition = math.max(minCondition, 1); -- safeguard
 		if broken then
 			item:setUsedDelta(minCondition/100);
