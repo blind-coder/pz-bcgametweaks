@@ -77,6 +77,7 @@ BCGT.CombineItems = function(player, context, items)--{{{
 		item = item.items[1];
 	end
 	if item == nil then return end;
+	if item:getReplaceOnDeplete() ~= nil then return end; -- usually water bottles etc.
 
 	local allItems = getSpecificPlayer(player):getInventory():FindAndReturn(item:getFullType(), 99999);
 	if allItems:size() <= 1 then return end;
