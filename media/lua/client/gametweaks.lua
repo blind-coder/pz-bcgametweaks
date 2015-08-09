@@ -30,26 +30,19 @@ ISInventoryTransferAction.isValid = function(self) -- {{{
 end
 -- }}}
 
-BCGT.ISReadABookUpdate = ISReadABook.update;
-BCGT.ISReadABookStart = ISReadABook.start;
--- freeze boredom and unhappyness while reading a skill book
-function ISReadABook.update(self) -- {{{
-	self.character:getBodyDamage():setBoredomLevel(ISReadABook.boredom);
-	self.character:getBodyDamage():setUnhappynessLevel(ISReadABook.boredom);
-	BCGT.ISReadABookUpdate(self);
-end
--- }}}
-function ISReadABook.start(self) -- {{{
-	ISReadABook.boredom = self.character:getBodyDamage():getBoredomLevel();
-	ISReadABook.unhappy = self.character:getBodyDamage():getUnhappynessLevel();
-	BCGT.ISReadABookStart(self);
-end
--- }}}
+BCGT.ISITAperform = ISInventoryTransferAction.perform;
+-- Combine Drainable items on transfer
+ISInventoryTransferAction.perform = function(self)--{{{
+	local retVal = BCGT.ISITAperform(self);
 
-BCGT.CombineItemsDoIt = function(item, player, allItems)--{{{
-	local fullType = item:getFullType();
-	local inv = getSpecificPlayer(player):getInventory();
+	if self.item == nil then return retVal end;
+	if not (instanceof(self.item, "Drainable") or instanceof(self.item, "DrainableComboItem")) then return retVal end
+	if self.item:getReplaceOnDeplete() ~= nil then return retVal end; -- usually water bottles etc.
+
+	local fullType = self.item:getFullType();
+	local inv = self.destContainer;
 	local fillstate = 0;
+	local allItems = inv:FindAndReturn(fullType, 99999);
 	for i=0,allItems:size()-1 do
 		fillstate = fillstate + allItems:get(i):getUsedDelta()*100;
 	end
@@ -67,23 +60,23 @@ BCGT.CombineItemsDoIt = function(item, player, allItems)--{{{
 			fillstate = fillstate - 100;
 		end
 	end
+
+	return retVal;
 end
 --}}}
-BCGT.CombineItems = function(player, context, items)--{{{
-	if #items > 1 then return end; -- we only create an entry for the first object
 
-	item = items[1];
-	if not instanceof(item, "InventoryItem") then
-		item = item.items[1];
-	end
-	if item == nil then return end;
-	if item:getReplaceOnDeplete() ~= nil then return end; -- usually water bottles etc.
-
-	local allItems = getSpecificPlayer(player):getInventory():FindAndReturn(item:getFullType(), 99999);
-	if allItems:size() <= 1 then return end;
-
-	local subMenu = ISContextMenu:getNew(context);
-	local buildOption = context:addOption("Combine into one", item, BCGT.CombineItemsDoIt, player, allItems);
+BCGT.ISReadABookUpdate = ISReadABook.update;
+BCGT.ISReadABookStart = ISReadABook.start;
+-- freeze boredom and unhappyness while reading a skill book
+function ISReadABook.update(self) -- {{{
+	self.character:getBodyDamage():setBoredomLevel(ISReadABook.boredom);
+	self.character:getBodyDamage():setUnhappynessLevel(ISReadABook.boredom);
+	BCGT.ISReadABookUpdate(self);
 end
---}}}
-Events.OnFillInventoryObjectContextMenu.Add(BCGT.CombineItems);
+-- }}}
+function ISReadABook.start(self) -- {{{
+	ISReadABook.boredom = self.character:getBodyDamage():getBoredomLevel();
+	ISReadABook.unhappy = self.character:getBodyDamage():getUnhappynessLevel();
+	BCGT.ISReadABookStart(self);
+end
+-- }}}
